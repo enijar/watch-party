@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { WatchWrapper } from "@/pages/watch/styles";
 import socket from "@/services/socket";
 
-const TIME_THRESHOLD_IN_SECONDS = 0.5;
+const TIME_THRESHOLD_IN_SECONDS = 1.5;
 
 function getVideoState(video: HTMLVideoElement): VideoState {
   let state: VideoState["state"];
