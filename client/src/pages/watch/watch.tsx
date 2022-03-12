@@ -65,8 +65,10 @@ export default function Watch() {
   const videoRef = React.useRef<HTMLVideoElement>();
 
   const seekingRef = React.useRef(false);
+  const connectedRef = React.useRef(false);
 
   const onTimeUpdate = React.useCallback(() => {
+    if (!connectedRef.current) return;
     if (seekingRef.current) return;
     socket.emit("videoState", getVideoState(videoRef.current));
   }, []);
@@ -74,6 +76,7 @@ export default function Watch() {
   React.useEffect(() => {
     async function onVideoState(videoState: VideoState) {
       await updateVideoState(videoRef.current, videoState);
+      connectedRef.current = true;
     }
 
     socket.on("videoState", onVideoState);
@@ -96,6 +99,7 @@ export default function Watch() {
           seekingRef.current = true;
         }}
         onSeeked={() => {
+          if (!connectedRef.current) return;
           socket.emit("videoState", getVideoState(videoRef.current));
           seekingRef.current = false;
         }}
