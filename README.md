@@ -1,17 +1,8 @@
-# Web Template
+# Watch Party
 
-Modern template for scalable web projects.
+Watch videos with friends. You are all in control of the video controls.
 
 ### Getting Started
-
-Set up a new project:
-
-```shell
-npx degit enijar/web-template project-name
-cd project-name
-```
-
-Run project:
 
 ```shell
 cp client/env.example.ts client/env.ts
