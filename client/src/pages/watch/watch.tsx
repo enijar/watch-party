@@ -54,62 +54,39 @@ export default function Watch() {
 
   const videoRef = React.useRef<HTMLVideoElement>();
 
+  const videoStateEmittedRef = React.useRef(false);
+
   const onPlay = React.useCallback(() => {
-    socket.emit("play", getVideoState(videoRef.current, "playing"));
+    if (videoStateEmittedRef.current) return;
+    socket.emit("videoState", getVideoState(videoRef.current, "playing"));
   }, []);
 
   const onPause = React.useCallback(() => {
-    socket.emit("pause", getVideoState(videoRef.current, "paused"));
+    if (videoStateEmittedRef.current) return;
+    socket.emit("videoState", getVideoState(videoRef.current, "paused"));
   }, []);
 
   const onEnded = React.useCallback(() => {
-    socket.emit("ended", getVideoState(videoRef.current, "ended"));
-  }, []);
-
-  const onSeeked = React.useCallback(() => {
-    // @todo implement this without causing loop issues
-    // let state: VideoState["state"];
-    // if (videoRef.current.paused) {
-    //   state = "paused";
-    // } else if (videoRef.current.ended) {
-    //   state = "ended";
-    // } else {
-    //   state = "playing";
-    // }
-    // socket.emit("seeked", getVideoState(videoRef.current, state));
+    if (videoStateEmittedRef.current) return;
+    socket.emit("videoState", getVideoState(videoRef.current, "ended"));
   }, []);
 
   React.useEffect(() => {
-    async function onPlay(videoState: VideoState) {
-      console.log("play");
-      return updateVideoState(videoRef.current, videoState);
+    let idleCallback: number;
+
+    async function onVideoState(videoState: VideoState) {
+      videoStateEmittedRef.current = true;
+      await updateVideoState(videoRef.current, videoState);
+      idleCallback = requestIdleCallback(() => {
+        videoStateEmittedRef.current = false;
+      });
     }
 
-    async function onPause(videoState: VideoState) {
-      console.log("pause");
-      return updateVideoState(videoRef.current, videoState);
-    }
-
-    async function onEnded(videoState: VideoState) {
-      console.log("ended");
-      return updateVideoState(videoRef.current, videoState);
-    }
-
-    async function onSeeked(videoState: VideoState) {
-      console.log("seeked");
-      return updateVideoState(videoRef.current, videoState);
-    }
-
-    socket.on("play", onPlay);
-    socket.on("pause", onPause);
-    socket.on("ended", onEnded);
-    socket.on("seeked", onSeeked);
+    socket.on("videoState", onVideoState);
 
     return () => {
-      socket.off("play", onPlay);
-      socket.off("pause", onPause);
-      socket.off("ended", onEnded);
-      socket.off("seeked", onSeeked);
+      socket.off("videoState", onVideoState);
+      cancelIdleCallback(idleCallback);
     };
   }, []);
 
@@ -124,7 +101,6 @@ export default function Watch() {
         onPlay={onPlay}
         onPause={onPause}
         onEnded={onEnded}
-        onSeeked={onSeeked}
       />
     </WatchWrapper>
   );
